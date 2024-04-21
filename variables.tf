@@ -1,34 +1,39 @@
 variable "service_principal" {
-  type = object({
+  type = list(object({
     name = string
     permissions = optional(list(object({
-      Permission = string
-      Role       = optional(list(string), [])
-      Scope      = optional(list(string), [])
-    })), [
+      api         = string
+      application = optional(list(string), [])
+      delegated   = optional(list(string), [])
+      })), [
       {
-        Permission = "MicrosoftGraph",
-        Role       = ["User.Read.All"],
-        Scope      = []
+        api         = "MicrosoftGraph",
+        application = ["User.Read.All"],
+        delegated   = []
       }
     ])
-  })
+  }))
   description = <<-DESC
-    Configuration for a single service principal. This object includes the name of the service principal
-    and a list of permissions specifying the access controls in Azure.
+    (Required) Defines a list of service principals with specific permissions.
 
     Attributes:
-    - `name` (Required): The name of the service principal.
-    - `permissions` (Required): A list of permission objects defining the types of access the service principal has.
-      - `Permission` (Required): Specifies the type of Microsoft service (e.g., MicrosoftGraph, DynamicsCrm) the permission applies to.
-      - `Role` (Optional): A list of roles under the specified permission. This list specifies what actions the service principal can perform.
-      - `Scope` (Optional): A list of scopes under the specified permission. Scopes define the boundaries of the permission within the service.
+    - `name`        (Required): The name of the service principal.
+    - `permissions` (Required): A list of permission objects defining access controls for the service principal.
+      - `api` (Required): The permission type, e.g., 'MicrosoftGraph', 'DynamicsCrm'.
+      - `application`       (Optional): A list of roles associated with the permission. Defaults to an empty list if not specified.
+      - `delegated`      (Optional): A list of scopes associated with the permission. Defaults to an empty list if not specified.
   DESC
 
   validation {
     condition = alltrue([
-      for perm in var.service_principal.permissions : length(perm.Role) > 0 || length(perm.Scope) > 0
+      for spn in var.service_principal : alltrue([
+        for perm in spn.permissions : (
+          length(perm.application) > 0 || length(perm.delegated) > 0
+        )
+      ])
     ])
-    error_message = "Err: Each permission must have at least one 'Role' or one 'Scope' defined."
+    error_message = "Err: Each permission must have either 'Application' or one 'Delegated' permission defined."
   }
 }
+
+
