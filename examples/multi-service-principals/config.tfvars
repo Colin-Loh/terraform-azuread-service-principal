@@ -19,16 +19,12 @@ service_principals = [
     name = "SPN-THREE"
     permissions = [
       {
-        api         = "MicrosoftGraph",
-        application = ["User.ReadWrite.All", "User.Read.All"]
-      },
-      {
         api       = "DynamicsCrm",
         delegated = ["user_impersonation"]
       },
       {
         api         = "PowerBiService",
-        application = ["Tenant.Read.All"]
+        application = ["Tenant.ReadWrite.All"]
       }
     ]
   }

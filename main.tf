@@ -1,12 +1,6 @@
 data "azuread_application_published_app_ids" "well_known" {}
 data "azuread_client_config" "current" {}
 
-# NOTE: that each service_principal will always have a MicrosoftGraph Role scope to User.Read.All to allow data oauth call, this will be listed as default
-
-# Creates a SPN for the existing Microsoft Enterprise Application
-# Each SPN will have 1 : M Microsoft Enterprise Application
-# We can only create one SPN per Microsoft Enterprise or else there will be an error
-
 resource "azuread_service_principal" "well_known" {
   for_each = toset(flatten([
     for spn in var.service_principal : [
