@@ -1,23 +1,20 @@
 data "azuread_application_published_app_ids" "well_known" {}
 data "azuread_client_config" "current" {}
 
+
 resource "azuread_service_principal" "well_known" {
   for_each = toset(flatten([
-    for spn in var.service_principal : [
-      for perm in spn.permissions : perm.api
+    for k, v in var.service_principals : [
+      for values in v.permissions : values.api
     ]
   ]))
 
-
-  client_id    = data.azuread_application_published_app_ids.well_known.result[each.value]
+  client_id    = data.azuread_application_published_app_ids.well_known.result[each.value] #never use a data call in a for_each 
   use_existing = true
 }
 
 resource "azuread_application" "this" {
-  for_each = merge({
-    for spn in var.service_principal :
-    spn.name => spn
-  })
+  for_each = var.service_principals
 
   display_name = each.key
   owners       = [data.azuread_client_config.current.object_id]
@@ -50,10 +47,8 @@ resource "azuread_application" "this" {
 }
 
 resource "azuread_service_principal" "principal_id" {
-  for_each = merge({
-    for spn in var.service_principal :
-    spn.name => spn
-  })
+  for_each = var.service_principals
+
 
   client_id = azuread_application.this[each.key].client_id
 }
@@ -61,10 +56,10 @@ resource "azuread_service_principal" "principal_id" {
 resource "azuread_app_role_assignment" "admin_consent" {
   for_each = {
     for i in flatten([
-      for k, v in var.service_principal : [
+      for k, v in var.service_principals : [
         for perm in v.permissions : [
           for application in perm.application : {
-            spn        = v.name
+            spn = k
             role       = application
             permission = perm.api
           } if length(perm.application) > 0

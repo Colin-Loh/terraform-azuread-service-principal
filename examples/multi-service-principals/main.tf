@@ -1,6 +1,6 @@
 module "service_principal" {
   source = "../.."
 
-  service_principal = var.service_principals
+  service_principals = var.service_principals
 }
 

@@ -1,5 +1,5 @@
 variable "service_principals" {
-  type = list(object({
+  type = object({
     name = string
     permissions = optional(list(object({
       api         = string
@@ -8,11 +8,11 @@ variable "service_principals" {
       })), [
       {
         api         = "MicrosoftGraph",
-        application = ["User.Read.All"],
+        application = ["User.Read.All"], #Directory ReadAll 
         delegated   = []
       }
     ])
-  }))
+  })
   description = <<-DESC
     (Required) Defines a list of service principals with specific permissions.
 
@@ -24,16 +24,16 @@ variable "service_principals" {
       - `delegated`      (Optional): A list of scopes associated with the permission. Defaults to an empty list if not specified.
   DESC
 
-  validation {
-    condition = alltrue([
-      for spn in var.service_principals : alltrue([
-        for perm in spn.permissions : (
-          length(perm.application) > 0 || length(perm.delegated) > 0
-        )
-      ])
-    ])
-    error_message = "Err: Each permission must have either 'Application' or one 'Delegated' permission defined."
-  }
+  # validation {
+  #   condition = alltrue([
+  #     for spn in var.service_principals : alltrue([
+  #       for perm in spn.permissions : (
+  #         length(perm.application) > 0 || length(perm.delegated) > 0
+  #       )
+  #     ])
+  #   ])
+  #   error_message = "Err: Each permission must have either 'Application' or one 'Delegated' permission defined."
+  # }
 }
 
 
