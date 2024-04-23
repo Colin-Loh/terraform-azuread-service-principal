@@ -1,25 +1,3 @@
-# module "service_principal" {
-#   source = "../.."
-
-#   service_principals = [
-#     {
-#       name = "SPN-ONE"
-#       permissions = [
-#         {
-#           api         = "MicrosoftGraph",
-#           application = ["User.ReadWrite.All", "User.Read.All"]
-#           delegated   = ["User.ReadWrite"]
-#         },
-#         {
-#           api       = "DynamicsCrm",
-#           delegated = ["user_impersonation"]
-#         }
-#       ]
-#     }
-#   ]
-# }
-
-
 module "service_principal" {
   source = "../.."
 
@@ -27,81 +5,46 @@ module "service_principal" {
     SPN-ONE = {
       permissions = [
         {
-          api         = "MicrosoftGraph",
-          application = ["User.ReadWrite.All", "User.Read.All"]
+          api         = "MicrosoftGraph"
           delegated   = ["User.ReadWrite"]
         },
         {
-          api       = "DynamicsCrm",
-          delegated = ["user_impersonation"]
-          application = []
+          api         = "DynamicsCrm"
+          delegated   = ["user_impersonation"]
         }
-      ]
+      ],
+      web = {
+        urls = {
+          homePageURL  = "https://app.example.net"
+          logoutURL    = "https://app.example.net/logout"
+          redirectURLs = ["https://app.example.net/account", "https://app.example.net/account2"]
+
+          grant = {
+            useAccessTokens = true
+            useIdTokens     = true
+          }
+        }
+      }
     },
-  SPN-TWO = {
+    SPN-TWO = {
       permissions = [
         {
-          api         = "MicrosoftGraph",
-          application = ["User.ReadWrite.All", "User.Read.All"]
-          delegated   = ["User.ReadWrite"]
+          api         = "DynamicsCrm"
+          delegated   = ["user_impersonation"]
+        },
+        {
+          api         = "PowerBiService",
+          application = ["Tenant.ReadWrite.All"]
         }
-      ]
-    }
+      ],
+      web = {
+        urls = {
+          homePageURL  = "https://app.example.net"
+          logoutURL    = "https://app.example.net/logout"
+          redirectURLs = ["https://app.example.net/account", "https://app.example.net/account2"]
+        }
+      }
+    },
+    SPN-THREE = {}
   }
 }
-
-
-# locals {
-#     service_principals = {
-#     "SPN-ONE" = {
-#       permissions = [
-#         {
-#           api         = "MicrosoftGraph",
-#           application = ["User.ReadWrite.All", "User.Read.All"]
-#           delegated   = ["User.ReadWrite"]
-#         },
-#         {
-#           api       = "DynamicsCrm",
-#           delegated = ["user_impersonation"]
-#           application = []
-#         }
-#       ]
-#     },
-#     "SPN-TWO" = {
-#       permissions = [
-#         {
-#           api         = "MicrosoftGraph",
-#           application = ["User.ReadWrite.All", "User.Read.All"]
-#           delegated   = ["User.ReadWrite"]
-#         },
-#         {
-#           api       = "PowerBi",
-#           delegated = ["user_impersonation"]
-#           application = []
-#         }
-#       ]
-#     }
-#   }
-# }
-
-# locals {
-#   test = toset({
-#     for k, v in local.service_principals : {
-#       for roles in v.permissions : [
-#         for role in roles.application : role.api
-#       ]
-#     }
-#   })
-# }
-
-# locals {
-#   test = toset(flatten([
-#     for k, v in local.service_principals : [
-#       for values in v.permissions : values.api
-#     ]
-#   ]))
-# }
-
-# output test {
-#   value = local.test
-# }

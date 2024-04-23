@@ -9,7 +9,7 @@ resource "azuread_service_principal" "well_known" {
     ]
   ]))
 
-  client_id    = data.azuread_application_published_app_ids.well_known.result[each.value] #never use a data call in a for_each 
+  client_id    = data.azuread_application_published_app_ids.well_known.result[each.value]
   use_existing = true
 }
 
@@ -26,7 +26,7 @@ resource "azuread_application" "this" {
       resource_app_id = data.azuread_application_published_app_ids.well_known.result[required_resource_access.value.api]
 
       dynamic "resource_access" {
-        for_each = can(required_resource_access.value.application) ? toset(required_resource_access.value.application) : toset([])
+        for_each = required_resource_access.value.application
 
         content {
           id   = azuread_service_principal.well_known[required_resource_access.value.api].app_role_ids[resource_access.value]
@@ -35,7 +35,7 @@ resource "azuread_application" "this" {
       }
 
       dynamic "resource_access" {
-        for_each = can(required_resource_access.value.delegated) ? toset(required_resource_access.value.delegated) : toset([])
+        for_each = required_resource_access.value.delegated
 
         content {
           id   = azuread_service_principal.well_known[required_resource_access.value.api].oauth2_permission_scope_ids[resource_access.value]
@@ -44,7 +44,23 @@ resource "azuread_application" "this" {
       }
     }
   }
+
+  dynamic "web" {
+    for_each = each.value.web
+
+    content {
+      homepage_url  = each.value.web.urls.homePageURL
+      logout_url    = each.value.web.urls.logoutURL
+      redirect_uris = each.value.web.urls.redirectURLs
+
+      implicit_grant {
+        access_token_issuance_enabled = each.value.web.urls.grant.useAccessTokens
+        id_token_issuance_enabled     = each.value.web.urls.grant.useIdTokens
+      }
+    }
+  }
 }
+
 
 resource "azuread_service_principal" "principal_id" {
   for_each = var.service_principals
@@ -59,7 +75,7 @@ resource "azuread_app_role_assignment" "admin_consent" {
       for k, v in var.service_principals : [
         for perm in v.permissions : [
           for application in perm.application : {
-            spn = k
+            spn        = k
             role       = application
             permission = perm.api
           } if length(perm.application) > 0
